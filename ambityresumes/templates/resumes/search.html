@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+{% block title %}Авторизация{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+  <form method="GET">
+      
+      <!-- Фильтры по возрасту, области и полу -->
+      <div class="row mb-3">
+          <div class="col-md-3">
+              <input type="number" class="form-control" name="age_from" placeholder="Возраст от">
+          </div>
+          <div class="col-md-3">
+              <input type="number" class="form-control" name="age_to" placeholder="Возраст до">
+          </div>
+          <div class="col-md-3">
+              <select class="form-control" name="area">
+                  <option disabled selected>Область</option>
+                  {% for area in areas %}
+                      <option value="{{ area }}">{{ area }}</option>
+                  {% endfor %}
+              </select>
+          </div>
+          <div class="col-md-3">
+              <select class="form-control" name="gender">
+                  <option disabled selected>Пол</option>
+                  <option value="male">Мужской</option>
+                  <option value="female">Женский</option>
+              </select>
+          </div>
+      </div>
+
+      <!-- Фильтры по типу работы, должности, опыту и уровню образования -->
+      <div class="row mb-3">
+          <div class="col-md-3">
+              <select class="form-control" name="types">
+                  <option disabled selected>Тип работы</option>
+                  {% for type in types %}
+                      <option value="{{ type }}">{{ type }}</option>
+                  {% endfor %}
+              </select>
+          </div>
+          <div class="col-md-3">
+              <select class="form-control" name="position">
+                  <option disabled selected>Должность</option>
+                  {% for position in positions %}
+                      <option value="{{ position }}">{{ position }}</option>
+                  {% endfor %}
+              </select>
+          </div>
+          <div class="col-md-3">
+              <input type="number" class="form-control" name="total_experience" placeholder="Опыт работы (лет)">
+          </div>
+          <div class="col-md-3">
+              <select class="form-control" name="education_level">
+                  <option disabled selected>Уровень образования</option>
+                  {% for level in education_levels %}
+                      <option value="{{ level }}">{{ level }}</option>
+                  {% endfor %}
+              </select>
+          </div>
+      </div>
+
+      <!-- Фильтры по заработной плате и датам -->
+      <div class="row mb-4">
+          <div class="col-md-4">
+              <select class="form-control" name="currency">
+                  <option disabled selected>Валюта</option>
+                  {% for currency in currencys %}
+                      <option value="{{ currency }}">{{ currency }}</option>
+                  {% endfor %}
+              </select>
+          </div>
+          <div class="col-md-4">
+              <input type="number" class="form-control" name="salary_from" placeholder="Зарплата от">
+          </div>
+          <div class="col-md-4">
+              <input type="number" class="form-control" name="salary_to" placeholder="Зарплата до">
+          </div>
+      </div>
+      <div class="row mb-4">
+          <div class="col-md-4">
+            <input type="date" class="form-control" name="date_from" placeholder="Дата от">
+          </div>
+          <div class="col-md-4">
+              <input type="date" class="form-control" name="date_to" placeholder="Дата до">
+          </div>
+          <div class="col-md-4">
+              <button type="submit" class="btn btn-primary w-100">Поиск</button>
+          </div>
+      </div>
+
+  </form>
+</div>
+
+<!-- Bootstrap JS и Popper.js -->
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+{% endblock %}
