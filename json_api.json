@@ -1,0 +1,35 @@
+{
+    "age": 74,
+    "area": "Voronezh",
+    "certificate": "http:\/\/guardian.co.uk\/en-us?p=8",
+    "education": {
+        "level": "\u0412\u044b\u0441\u0448\u0435\u0435",
+        "primary_name": "\u0412\u044b\u0441\u0448\u0435\u0435 \u0443\u0447\u0435\u0431\u043d\u043e\u0435 \u0437\u0430\u0432\u0435\u0434\u0435\u043d\u0438\u0435",
+        "primary_organization": "\u0423\u043d\u0438\u0432\u0435\u0440\u0441\u0438\u0442\u0435\u0442 \u0421\u0438\u043d\u0435\u0440\u0433\u0438\u044f ",
+        "primary_result": "\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u0431\u0430\u0437\u044b \u0434\u0430\u043d\u043d\u044b\u0445",
+        "primary_year": 2004
+    },
+    "experience": {
+        "area": "Cherepovets",
+        "company": "Cursus Company",
+        "start": "2007-12-30 00:00:00",
+        "end": "2021-05-13 00:00:00",
+        "industry": "\u041f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435",
+        "position": "\u041f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0438\u0441\u0442"
+    },
+    "first_name": "Judah",
+    "gender": "\u041c\u0443\u0436\u0447\u0438\u043d\u0430",
+    "last_name": "Xantha",
+    "middle_name": "Hamilton",
+    "resume": "\u041e\u043f\u044b\u0442 \u0440\u0430\u0431\u043e\u0442\u044b \u0441 \u0431\u043e\u043b\u044c\u0448\u0438\u043c \u043e\u0431\u044a\u0435\u043c\u043e\u043c \u0434\u0430\u043d\u043d\u044b\u0445 \u0438 \u0443\u043c\u0435\u043d\u0438\u0435 \u043f\u0440\u043e\u0432\u043e\u0434\u0438\u0442\u044c \u0430\u043d\u0430\u043b\u0438\u0437, \u043f\u043e\u043c\u043e\u0433\u0430\u0435\u0442 \u043f\u0440\u0438\u043d\u0438\u043c\u0430\u0442\u044c \u043e\u0431\u043e\u0441\u043d\u043e\u0432\u0430\u043d\u043d\u044b\u0435 \u0440\u0435\u0448\u0435\u043d\u0438\u044f \u043d\u0430 \u043e\u0441\u043d\u043e\u0432\u0435 \u0444\u0430\u043a\u0442\u043e\u0432 \u0438 \u0446\u0438\u0444\u0440.",
+    "salary": {
+        "amount": 53025,
+        "currency": "RUB"
+    },
+    "title": "\u041f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0438\u0441\u0442",
+    "total_experience": 4,
+    "phone": "(888) 624-5332",
+    "email": "vel.quam@yahoo.com",
+    "created_at": "2016-06-23T17:22:32.000000Z",
+    "updated_at": "2024-04-18T16:52:41.000000Z"
+}
