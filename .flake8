@@ -1,0 +1,8 @@
+[flake8]
+exclude = .git,__pycache__,docs/source/conf.py,old,build,dist,venv,migrations
+max-complexity = 10
+inline-quotes = double
+import-order-style = google
+max-line-length = 79
+black-config = .black
+application-import-names =

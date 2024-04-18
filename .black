@@ -1,0 +1,4 @@
+[tool.black]
+line-length = 79
+use-single-quotes = false
+exclude = '/.git|venv|migrations'
