@@ -1,7 +1,7 @@
 from typing import Any
 from django.db.models.query import QuerySet
 from django.views import View
-from django.views.generic import TemplateView, ListView, CreateView
+from django.views.generic import TemplateView, ListView, CreateView, DetailView
 from django.http import HttpResponseRedirect
 from resumes.models import Resume, Applicant, Area, Education, EducationLevel, ExperienceIndustry, Currency, ExperiencePosition, Experience, Folder
 import requests
@@ -164,7 +164,7 @@ class SearchResumesView(ListView):
             )
 
     def filter_resumes(self, params):
-        queryset = Resume.objects.all()
+        queryset = Resume.objects.select_related("applicant", "salary_currency")
         
         if "age_from" in params:
             queryset = queryset.filter(applicant__age__gte=params["age_from"])
@@ -224,5 +224,23 @@ class SaveFolderView(CreateView):
         folder.save()
         folder.resumes.set(resumes)
         folder.save()
-        
+
         return super().form_valid(form)
+
+
+class FolderView(ListView):
+    model = Resume  # Используем модель Resume, так как вы хотите просмотреть все резюме из папки
+    context_object_name = "resumes"
+    template_name = "resumes/folder.html"
+    paginate_by = 50
+
+    def get_queryset(self):
+        folder = Folder.objects.get(pk=self.kwargs['pk'])  # Получаем папку по переданному pk из URL
+        return folder.resumes.all()
+    
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        folder = Folder.objects.get(pk=self.kwargs['pk'])
+        context["folder_name"] = folder.name
+        return context
+

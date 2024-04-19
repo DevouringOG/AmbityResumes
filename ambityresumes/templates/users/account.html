@@ -31,7 +31,7 @@
                       <h5 class="card-title fs-3 fw-bolder">{{ folder.name }}</h5>
                       <p class="card-text">{{ folder.date_create }}</p>
                       <hr class="hr" />
-                      <a href="#" class="btn btn-danger">Открыть</a>
+                      <a href="{% url "resumes:folder" folder.pk %}" class="btn btn-danger">Открыть</a>
                   </div>
               </div>
             </div>

@@ -20,4 +20,9 @@ urlpatterns = [
         resumes.views.SaveFolderView.as_view(),
         name="save",
     ),
+    path(
+        "folder/<int:pk>",
+        resumes.views.FolderView.as_view(),
+        name="folder",
+    ),
 ]

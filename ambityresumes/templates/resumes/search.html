@@ -110,37 +110,7 @@
 
 <link rel="stylesheet" href="{% static 'css/bootstrap.select.min.css' %}">
 
-<div class="container mt-5">
-    <div class="col mt-3">
-        <div class="overflow-auto">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th scope="col">Желаемая должность</th>
-                        <th scope="col">ФИО</th>
-                        <th scope="col">Возраст</th>
-                        <th scope="col">Город</th>
-                        <th scope="col">Пол</th>
-                        <th scope="col">Сумма ЗП</th>
-                        <th scope="col">Опыт работы</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for resume in resumes %}
-                    <tr>
-                        <td>{{ resume.title }}</td>
-                        <td>{{ resume.applicant.first_name }} {{ resume.applicant.last_name.0 }}.</td>
-                        <td>{{ resume.applicant.age }}</td>
-                        <td>{{ resume.applicant.area }}</td>
-                        <td>{{ resume.applicant.gender }}</td>
-                        <td>{{ resume.salary_amount }} {{ resume.salary_currency }}</td>
-                        <td>{{ resume.applicant.total_experience }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+{% include "includes/search_resumes_list.html" %}
 
 <div class="pagination justify-content-center mt-4">
     <ul class="pagination">
