@@ -25,4 +25,9 @@ urlpatterns = [
         resumes.views.FolderView.as_view(),
         name="folder",
     ),
+    path(
+        "view/<int:pk>",
+        resumes.views.ResumeView.as_view(),
+        name="view",
+    ),
 ]

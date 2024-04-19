@@ -23,7 +23,7 @@
     </thead>
     <tbody>
         {% for resume in resumes %}
-        <tr onclick="window.location.href=''" style="cursor: pointer;">
+        <tr onclick="window.location.href='{% url 'resumes:view' resume.id %}'" style="cursor: pointer;">
             <td>{{ resume.api_id }}</td>
             <td>{{ resume.applicant.first_name }} {{ resume.applicant.middle_name|slice:":1" }}</td>
             <td>{{ resume.title }}</td>

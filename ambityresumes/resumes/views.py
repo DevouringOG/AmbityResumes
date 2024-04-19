@@ -244,3 +244,8 @@ class FolderView(ListView):
         context["folder_name"] = folder.name
         return context
 
+
+class ResumeView(DetailView):
+    model = Resume
+    template_name = "resumes/view.html"
+    context_object_name = "resume"
