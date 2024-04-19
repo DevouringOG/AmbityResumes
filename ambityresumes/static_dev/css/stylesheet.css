@@ -1,0 +1,15 @@
+/* styles.css */
+
+/* Добавление черной обводки вокруг папок */
+.folder {
+    border: 2px solid black;
+    padding: 10px;
+    margin: 10px;
+    text-align: center;
+}
+
+/* Увеличение кнопки "Выйти" */
+.btn-exit {
+    font-size: 1.5em;
+    padding: 10px 20px;
+}

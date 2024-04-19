@@ -15,4 +15,9 @@ urlpatterns = [
         resumes.views.UpdateDataView.as_view(),
         name="update",
     ),
+    path(
+        "save/",
+        resumes.views.SaveFolderView.as_view(),
+        name="save",
+    ),
 ]

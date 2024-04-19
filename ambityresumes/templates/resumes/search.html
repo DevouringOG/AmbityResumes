@@ -99,9 +99,8 @@
                         <a href="{% url 'resumes:search' %}" class="btn btn-danger w-100" id="clear">Сбросить</a>
                     </div>
                     <div class="col-md-4">
-                        <button type="submit" class="btn btn-danger w-100">Сохранить</button>
+                        <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#saveFolderModal">Сохранить</button>
                     </div>
-
                 </div>
             </div>
             
@@ -141,10 +140,6 @@
                 </tbody>
             </table>
         </div>
-        {% comment %} <div class="col py-4 fixed-bottom d-flex justify-content-center">
-            <a href="{% url 'resumes:search' %}" class="btn btn-danger m-1" id="clear">Сбросить</a>
-            <button type="submit" class="btn btn-danger m-1">Сохранить</button>
-        </div> {% endcomment %}
     </div>
 
 <div class="pagination justify-content-center mt-4">
@@ -189,6 +184,30 @@
     </ul>
 </div>
 
+<div class="modal fade" id="saveFolderModal" tabindex="-1" aria-labelledby="saveFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="saveFolderModalLabel">Введите имя папки</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="saveFolderForm" method="POST" action="{% url 'resumes:save' %}">
+            {% csrf_token %}
+            <input type="text" class="form-control" id="folderNameInput" name="name" placeholder="Имя папки">
+            
+            <!-- Скрытое поле для передачи ID отфильтрованных резюме -->
+            <input type="hidden" id="resumeIds" name="resumes" value="{% for resume in resumes %}{{ resume.id }},{% endfor %}">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" form="saveFolderForm" class="btn btn-primary">Сохранить</button>
+        </div>
+      </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const selectFilters = document.querySelectorAll('select');
@@ -207,6 +226,19 @@
         const resetButton = document.getElementById('clear');
         resetButton.addEventListener('click', function() {
             localStorage.clear();  // Очистка localStorage
+        });
+
+        // Обработчик события для кнопки "Сохранить"
+        const saveButton = document.getElementById('saveFolderBtn');
+        saveButton.addEventListener('click', function() {
+            const folderName = document.getElementById('folderNameInput').value;
+            if (folderName.trim() !== '') {
+                // Здесь можно добавить код для сохранения папки
+                alert('Папка сохранена: ' + folderName);
+                $('#saveFolderModal').modal('hide'); // Закрыть модальное окно
+            } else {
+                alert('Введите имя папки');
+            }
         });
     });
 </script>

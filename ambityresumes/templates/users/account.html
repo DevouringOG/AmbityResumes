@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <!-- Шапка личного кабинета -->
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-danger p-3 rounded">
+        <div class="d-flex align-items-center">
+            <img src="{% static 'images/avatar.jpg' %}" alt="Avatar" class="rounded-circle mr-4" style="width: 100px; height: 100px;">
+            <div>
+                <h2 class="text-white mb-0 md-4">{{ request.user.username }}</h2>
+            </div>
+        </div>
+        <a href="#" class="btn btn-light fw-bold">Выйти</a>
+    </div>
+
+    <!-- Основная часть с папками резюме пользователя -->
+    <div class="bg-danger p-4 rounded">
+
+        <h3 class="text-white mb-4">Ваши папки</h3>
+
+        <div class="row">
+
+            {% for folder in folders %}
+            <div class="col-md-4 mb-4">
+              <div class="card bg-light text-dark fw-bold">
+                  <div class="card-body">
+                      <h5 class="card-title fs-3 fw-bolder">{{ folder.name }}</h5>
+                      <p class="card-text">{{ folder.date_create }}</p>
+                      <hr class="hr" />
+                      <a href="#" class="btn btn-danger">Открыть</a>
+                  </div>
+              </div>
+            </div>
+            {% endfor %}
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="{% static 'js/jQuery3-6-0.js' %}"></script>
+<script src="{% static 'js/bootstrap5-2-1.js' %}"></script>
+
+{% endblock %}

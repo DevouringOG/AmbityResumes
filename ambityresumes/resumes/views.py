@@ -1,10 +1,11 @@
 from typing import Any
 from django.db.models.query import QuerySet
 from django.views import View
-from django.views.generic import TemplateView, ListView
+from django.views.generic import TemplateView, ListView, CreateView
 from django.http import HttpResponseRedirect
-from resumes.models import Resume, Applicant, Area, Education, EducationLevel, ExperienceIndustry, Currency, ExperiencePosition, Experience
+from resumes.models import Resume, Applicant, Area, Education, EducationLevel, ExperienceIndustry, Currency, ExperiencePosition, Experience, Folder
 import requests
+from django.urls import reverse_lazy
 from django.apps import apps
 import re
 from transliterate import translit
@@ -202,3 +203,26 @@ class SearchResumesView(ListView):
             queryset = queryset.filter(salary_currency__name=params["currency"])
                 
         return queryset.distinct()
+
+
+class SaveFolderView(CreateView):
+    model = Folder
+    fields = ['name']
+    template_name = 'your_template_name.html'
+    success_url = reverse_lazy('users:account')
+
+    def form_valid(self, form):
+        folder = form.save(commit=False)
+        folder.user = self.request.user
+
+        # Получение резюме из скрытого поля
+        resumes_ids_str = self.request.POST.get('resumes')
+        print(resumes_ids_str)
+        resumes_ids = [int(id) for id in resumes_ids_str.split(',') if id.isdigit()]
+        resumes = Resume.objects.filter(id__in=resumes_ids)
+
+        folder.save()
+        folder.resumes.set(resumes)
+        folder.save()
+        
+        return super().form_valid(form)

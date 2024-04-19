@@ -10,4 +10,9 @@ urlpatterns = [
         users.views.AuthView.as_view(),
         name="auth",
     ),
+    path(
+        "account/",
+        users.views.AccountView.as_view(),
+        name="account",
+    ),
 ]

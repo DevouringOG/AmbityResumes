@@ -1,7 +1,10 @@
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
 from django.views import View
+from django.views.generic import TemplateView, ListView
+from resumes.models import Folder
 
 
 class AuthView(View):
@@ -23,9 +26,7 @@ class AuthView(View):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    return redirect(
-                        "some_redirect_view_name",
-                    )  # Замените на имя вашего представления после входа
+                    return redirect(reverse_lazy("resumes:search"))  # Замените на имя вашего представления после входа
             else:
                 login_form = AuthenticationForm(data=request.POST)
                 register_form = UserCreationForm()
@@ -43,9 +44,7 @@ class AuthView(View):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    return redirect(
-                        "some_redirect_view_name",
-                    )  # Замените на имя вашего представления после регистрации
+                    return redirect(reverse_lazy("resumes:search"))  # Замените на имя вашего представления после регистрации
             else:
                 login_form = AuthenticationForm()
                 register_form = UserCreationForm(data=request.POST)
@@ -54,3 +53,13 @@ class AuthView(View):
                     "users/auth.html",
                     {"login_form": login_form, "register_form": register_form},
                 )
+
+
+class AccountView(ListView):
+    template_name = "users/account.html"
+    context_object_name = "folders"
+    model = Folder
+    paginate_by = 6
+
+    def get_queryset(self):
+        return self.model.objects.filter(user=self.request.user)
