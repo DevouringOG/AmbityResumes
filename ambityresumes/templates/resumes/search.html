@@ -11,10 +11,10 @@
       <!-- Фильтры по возрасту, области и полу -->
       <div class="row mb-3">
           <div class="col-md-3">
-              <input type="number" class="form-control" name="age_from" placeholder="Возраст от">
+              <input type="number" class="form-control" name="age_from" placeholder="Возраст от" value="{{ request.GET.age_from }}">
           </div>
           <div class="col-md-3">
-              <input type="number" class="form-control" name="age_to" placeholder="Возраст до">
+              <input type="number" class="form-control" name="age_to" placeholder="Возраст до" value="{{ request.GET.age_to }}">
           </div>
           <div class="col-md-3">
               <select class="form-control" name="area">
@@ -36,10 +36,10 @@
       <!-- Фильтры по типу работы, должности, опыту и уровню образования -->
       <div class="row mb-3">
           <div class="col-md-3">
-              <select class="form-control" name="types">
+              <select class="form-control" name="experience">
                   <option disabled selected>Тип работы</option>
-                  {% for type in types %}
-                      <option value="{{ type }}">{{ type }}</option>
+                  {% for industry in industrys %}
+                      <option value="{{ industry }}">{{ industry }}</option>
                   {% endfor %}
               </select>
           </div>
@@ -52,7 +52,7 @@
               </select>
           </div>
           <div class="col-md-3">
-              <input type="number" class="form-control" name="total_experience" placeholder="Опыт работы (лет)">
+              <input type="number" class="form-control" name="total_experience" placeholder="Опыт работы (лет)" value="{{ request.GET.total_experience }}">
           </div>
           <div class="col-md-3">
               <select class="form-control" name="education_level">
@@ -75,18 +75,18 @@
               </select>
           </div>
           <div class="col-md-4">
-              <input type="number" class="form-control" name="salary_from" placeholder="Зарплата от">
+              <input type="number" class="form-control" name="salary_from" placeholder="Зарплата от" value="{{ request.GET.salary_from }}">
           </div>
           <div class="col-md-4">
-              <input type="number" class="form-control" name="salary_to" placeholder="Зарплата до">
+              <input type="number" class="form-control" name="salary_to" placeholder="Зарплата до" value="{{ request.GET.salary_to }}">
           </div>
       </div>
       <div class="row mb-4">
           <div class="col-md-4">
-            <input type="date" class="form-control" name="date_from" placeholder="Дата от">
+            <input type="date" class="form-control" name="date_from" placeholder="Дата от" value="{{ request.GET.date_from }}">
           </div>
           <div class="col-md-4">
-              <input type="date" class="form-control" name="date_to" placeholder="Дата до">
+              <input type="date" class="form-control" name="date_to" placeholder="Дата до" value="{{ request.GET.date_to|default:today }}">
           </div>
           <div class="col-md-4">
               <button type="submit" class="btn btn-primary w-100">Поиск</button>
@@ -96,7 +96,79 @@
   </form>
 </div>
 
-<!-- Bootstrap JS и Popper.js -->
+<link rel="stylesheet" href="{% static 'css/bootstrap.select.min.css' %}">
+
+<div class="container">
+
+  <div class="col mt-3">
+
+    <div class="overflow-auto">
+      <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Желаемая должность</th>
+                <th scope="col">ФИО</th>
+                <th scope="col">Возраст</th>
+                <th scope="col">Город</th>
+                <th scope="col">Пол</th>
+                <th scope="col">Сумма ЗП</th>
+                <th scope="col">Опыт работы</th>
+            </tr>
+        </thead>
+
+          {% for resume in resumes %}
+            <tr>
+                <td>{{ resume.title }}</td>
+                <td>{{ resume.applicant.first_name }} {{ resume.applicant.last_name.0 }}.</td>
+                <td>{{ resume.applicant.age }}</td>
+                <td>{{ resume.applicant.area }}</td>
+                <td>{{ resume.applicant.gender }}</td>
+                <td>{{ resume.salary_amount }} {{ resume.salary_currency }}</td>
+                <td>{{ resume.applicant.total_experience }}</td>
+            </tr>
+          {% endfor %}
+
+          <div class="col py-4 fixed-bottom d-flex justify-content-center">
+            <div class="btn btn-primary m-1"><span>Сбросить</span></div>
+            <button type="submit" class="btn btn-primary m-1">Сохранить</button>
+          </div>
+
+        </form>
+      </table>
+    </div>
+
+  </div>
+  {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-3">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ url_kwargs }}" aria-label="Назад">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item disabled">
+                <span class="page-link">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ url_kwargs }}" aria-label="След">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+  {% endif %}
+</div>
+
+<script src="{% static 'js/jQuery3-6-0.js' %}"></script>
+
+<script src="{% static 'js/bootstrap5-2-1.js' %}" ></script>
+
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 
 {% endblock %}
