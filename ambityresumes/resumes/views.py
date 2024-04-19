@@ -42,7 +42,6 @@ class UpdateDataView(View):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
-
 class SearchResumesView(ListView):
     template_name = "resumes/search.html"
     context_object_name = "resumes"
@@ -51,161 +50,155 @@ class SearchResumesView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["areas"] = Area.objects.all()
-        context["education_levels"] = EducationLevel.objects.all()
-        context["industrys"] = ExperienceIndustry.objects.all()
-        context["positions"] = ExperiencePosition.objects.all()
-        context["currencys"] = Currency.objects.all()
-        context["today"] = (
-            timezone.localdate()
-            .strftime("%Y.%m.%d")
-            .replace(".", "-")
-        )
+        context.update({
+            "areas": Area.objects.all(),
+            "education_levels": EducationLevel.objects.all(),
+            "industrys": ExperienceIndustry.objects.all(),
+            "positions": ExperiencePosition.objects.all(),
+            "currencys": Currency.objects.all(),
+            "today": timezone.localdate().strftime("%Y-%m-%d"),
+        })
         return context
 
     def get_queryset(self):
-        # Параметры фильтрации
-        age_from = self.request.GET.get('age_from')
-        age_to = self.request.GET.get('age_to')
-        area = self.request.GET.get('area')
-        date_from = self.request.GET.get('date_from')
-        date_to = self.request.GET.get('date_to')
-        education_level = self.request.GET.get('education_level')
-        experience_industry = self.request.GET.get('industry')
-        gender = self.request.GET.get('gender')
-        currency = self.request.GET.get('currency')
-        salary_from = self.request.GET.get('salary_from')
-        salary_to = self.request.GET.get('salary_to')
-        total_experience = self.request.GET.get('total_experience')
-        
-        # Получаем резюме из API
+        params = self.extract_params()
+        api_resumes = self.get_api_resumes(params)
+        self.save_to_db(api_resumes)
+        queryset = self.filter_resumes(params)
+        return queryset
+
+    def extract_params(self):
+        params = {key: value for key, value in self.request.GET.items() if value}
+        # Remove specific keys from params
+        for key in ["total_experience", "position", "date_from", "date_to"]:
+            params.pop(key, None)
+        return params
+
+    def get_api_resumes(self, params):
         api_url = 'http://a0814722.xsph.ru/api/resume'
         headers = {'Api-key': 'Bxq7HZmXVDHVUW1d2X0J'}
-        params = {}
-        for key, value in self.request.GET.items():
-            if value and key not in ["total_experience", "position", "date_from", "date_to"]:
-                params[key] = value
-            # if key in ["date_from", "date_to"]:
-            #     params[key] = datetime.strptime(value, '%Y-%m-%d').isoformat()
-
         response = requests.get(api_url, headers=headers, params=params)
-
         if response.status_code == 200:
-            api_resumes = response.json()
-            # Создаем резюме в БД на основе ответа API
-            for api_resume in api_resumes:
-                education_data = api_resume.pop('education', {})
-                experience_data = api_resume.get('experience', {})
-                salary = api_resume.get("salary", {})
-                
-                # Проверяем, существует ли такой соискатель в БД
-                applicant, created = Applicant.objects.get_or_create(
-                    first_name=api_resume["first_name"] if api_resume["first_name"] else None,
-                    last_name=api_resume["last_name"] if api_resume["last_name"] else None,
-                    middle_name=api_resume["middle_name"] if api_resume["middle_name"].isdigit() else None,
-                    age=api_resume["age"] if api_resume["age"] else None,
-                    gender=api_resume["gender"] if api_resume["gender"] else "Не указан",
-                    phone=api_resume["phone"] if api_resume["phone"] else None,
-                    email=api_resume["email"] if api_resume["email"] else None,
-                    total_experience=api_resume["total_experience"] if api_resume["total_experience"] else None,
-                    area=translit(api_resume["area"], "ru") if api_resume["area"] else None,
-                )
-                
-                # Создаем или обновляем образование соискателя
-                Education.objects.update_or_create(
-                    applicant=applicant,
-                    level=EducationLevel.objects.get(name=education_data["level"]) if education_data['level'] else None,
-                    primary_name=education_data['primary_name'] if education_data['primary_name'] else None,
-                    primary_organization=education_data['primary_organization'] if education_data['primary_organization'] else None,
-                    primary_result=education_data['primary_result'] if education_data['primary_result'] else None,
-                    primary_year=education_data['primary_year'] if education_data['primary_year'] else None,
-                )
-                
-                start_date_str = experience_data['start']
-                end_date_str = experience_data['end']
+            return response.json()
+        return []
 
-                # Преобразование строки даты в объект datetime
-                start_date = datetime.strptime(start_date_str, '%Y-%m-%d %H:%M:%S')
-                end_date = datetime.strptime(end_date_str, '%Y-%m-%d %H:%M:%S')
+    def save_to_db(self, api_resumes):
+        resumes_ids = Resume.objects.all().values_list("pk", flat=True)
+        for api_resume in api_resumes:
+            if api_resume["id"] not in resumes_ids:
+                self.save_applicant(api_resume)
+                self.save_education(api_resume)
+                self.save_experience(api_resume)
+                self.save_resume(api_resume)
 
-                # Преобразование обратно в строку в нужном формате
-                start_date_formatted = start_date.strftime('%Y-%m-%d')
-                end_date_formatted = end_date.strftime('%Y-%m-%d')
+    def save_applicant(self, api_resume):
+        applicant_data = {
+            "first_name": api_resume.get("first_name", None),
+            "last_name": api_resume.get("last_name", None),
+            "middle_name": api_resume.get("middle_name", None),
+            "age": api_resume.get("age", None),
+            "gender": api_resume.get("gender", "Не указан"),
+            "phone": api_resume.get("phone", None),
+            "email": api_resume.get("email", None),
+            "total_experience": api_resume.get("total_experience", None),
+            "area": translit(api_resume.get("area", ""), "ru"),
+        }
+        Applicant.objects.get_or_create(**applicant_data)
 
-                area_inst = Area.objects.get_or_create(name=translit(experience_data["area"], "ru")),
-                Experience.objects.update_or_create(
-                    applicant=applicant,
-                    area=area_inst[0][0],
-                    company=experience_data['company'] if experience_data['company'] else None,
-                    start=start_date_formatted,
-                    end=end_date_formatted,
-                    industry=ExperienceIndustry.objects.get(name=experience_data['industry']) if experience_data['industry'] else None,
-                    position=ExperiencePosition.objects.get(name=experience_data['position']) if experience_data['position'] else None,
-                )
-                
-                # Создаем или обновляем резюме
-                Resume.objects.update_or_create(
-                    api_id=api_resume['id'],
-                    defaults={
-                        'applicant': applicant,
-                        'certificate': api_resume['certificate'] if api_resume['certificate'] else None,
-                        'salary_amount': salary['amount'] if salary['amount'] else None,
-                        'salary_currency': Currency.objects.get(name=salary['currency']),
-                        'title': api_resume['title'] if api_resume['title'] else None,
-                        'description': api_resume['resume'] if api_resume['resume'] else None,
-                        "created_at": api_resume['created_at'],
-                        "updated_at": api_resume['updated_at'],
-                    }
-                )
-            
-            # Фильтрация резюме в БД
-            # Инициализация базового queryset
-            queryset = Resume.objects.all()
+    def save_education(self, api_resume):
+        education_data = api_resume.get('education', {})
+        applicant = Applicant.objects.filter(
+            first_name=api_resume.get("first_name", None),
+            last_name=api_resume.get("last_name", None),
+        ).first()
+        if applicant:
+            Education.objects.update_or_create(
+                applicant=applicant,
+                level=EducationLevel.objects.get_or_create(name=education_data["level"])[0] if education_data["level"] else None,
+                primary_name=education_data.get('primary_name', None),
+                primary_organization=education_data.get('primary_organization', None),
+                primary_result=education_data.get('primary_result', None),
+                primary_year=education_data.get('primary_year', None),
+            )
 
-            # Проверка и фильтрация по возрасту
-            if age_from:
-                queryset = queryset.filter(applicant__age__gte=age_from)
+    def save_experience(self, api_resume):
+        experience_data = api_resume.get('experience', {})
+        applicant = Applicant.objects.filter(
+            first_name=api_resume.get("first_name", None),
+            last_name=api_resume.get("last_name", None),
+        ).first()
+        area, _ = Area.objects.get_or_create(name=translit(experience_data["area"], "ru")) if experience_data["area"] else None
+        if applicant:
+            start_date = datetime.strptime(experience_data.get('start', ''), '%Y-%m-%d %H:%M:%S')
+            end_date = datetime.strptime(experience_data.get('end', ''), '%Y-%m-%d %H:%M:%S')
+            Experience.objects.update_or_create(
+                applicant=applicant,
+                area=area,
+                company=experience_data.get('company', None),
+                start=start_date.strftime('%Y-%m-%d'),
+                end=end_date.strftime('%Y-%m-%d'),
+                industry=ExperienceIndustry.objects.get_or_create(name=experience_data["industry"])[0] if experience_data["industry"] else None,
+                position=ExperiencePosition.objects.get_or_create(name=experience_data["position"])[0] if experience_data["position"] else None,
+            )
 
-            if age_to:
-                queryset = queryset.filter(applicant__age__lte=age_to)
+    def save_resume(self, api_resume):
+        salary = api_resume.get("salary", {})
+        applicant = Applicant.objects.filter(
+            first_name=api_resume.get("first_name", None),
+            last_name=api_resume.get("last_name", None),
+        ).first()
+        if applicant:
+            Resume.objects.update_or_create(
+                api_id=api_resume.get('id', None),
+                defaults={
+                    'applicant': applicant,
+                    'certificate': api_resume.get('certificate', None),
+                    'salary_amount': salary.get('amount', None),
+                    'salary_currency': Currency.objects.get_or_create(name=salary["currency"])[0] if salary["currency"] else None,
+                    'title': api_resume.get('title', None),
+                    'description': api_resume.get('resume', None),
+                    "created_at": api_resume.get('created_at', None),
+                    "updated_at": api_resume.get('updated_at', None),
+                }
+            )
 
-            # Проверка и фильтрация по району
-            if area:
-                queryset = queryset.filter(applicant__area=area)
-
-            # Проверка и фильтрация по дате создания
-            if date_from:
-                queryset = queryset.filter(created_at__gte=date_from)
-
-            if date_to:
-                queryset = queryset.filter(created_at__lte=date_to)
-
-            # Проверка и фильтрация по общему опыту
-            if total_experience:
-                queryset = queryset.filter(applicant__total_experience__gte=total_experience)
-
-            # Проверка и фильтрация по полу
-            print(gender)
-            if gender:
-                queryset = queryset.filter(applicant__gender=gender)
-
-            # Проверка и фильтрация по зарплате
-            if salary_from:
-                queryset = queryset.filter(salary_amount__gte=salary_from)
-
-            if salary_to:
-                queryset = queryset.filter(salary_amount__lte=salary_to)
-            
-            if education_level:
-                queryset = queryset.filter(applicant__educations__level__name=education_level)
-                
-            if experience_industry:
-                queryset = queryset.filter(experience__industry__name=experience_industry)
-                
-            if currency:
-                queryset = queryset.filter(salary_currency__name=currency)
-                
-            return queryset.distinct()
+    def filter_resumes(self, params):
+        queryset = Resume.objects.all()
         
-        else:
-            return Resume.objects.none()
+        if "age_from" in params:
+            queryset = queryset.filter(applicant__age__gte=params["age_from"])
+
+        if "age_to" in params:
+            queryset = queryset.filter(applicant__age__lte=params["age_to"])
+
+        if "area" in params:
+            queryset = queryset.filter(applicant__area=params["area"])
+
+        if "date_from" in params:
+            queryset = queryset.filter(created_at__gte=params["date_from"])
+
+        if "date_to" in params:
+            queryset = queryset.filter(created_at__lte=params["date_to"])
+
+        if "total_experience" in params:
+            queryset = queryset.filter(applicant__total_experience__gte=params["total_experience"])
+
+        if "gender" in params:
+            queryset = queryset.filter(applicant__gender=params["gender"])
+
+        if "salary_from" in params:
+            queryset = queryset.filter(salary_amount__gte=params["salary_from"])
+
+        if "salary_to" in params:
+            queryset = queryset.filter(salary_amount__lte=params["salary_to"])
+        
+        if "education_level" in params:
+            queryset = queryset.filter(applicant__educations__level__name=params["education_level"])
+                
+        if "industry" in params:
+            queryset = queryset.filter(experience__industry__name=params["industry"])
+                
+        if "currency" in params:
+            queryset = queryset.filter(salary_currency__name=params["currency"])
+                
+        return queryset.distinct()
