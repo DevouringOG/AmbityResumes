@@ -21,12 +21,12 @@ urlpatterns = [
         name="save",
     ),
     path(
-        "folder/<int:pk>",
+        "folder/<int:folder_pk>",
         resumes.views.FolderView.as_view(),
         name="folder",
     ),
     path(
-        "view/<int:pk>",
+        "folder/<int:folder_pk>/<int:resume_pk>",
         resumes.views.ResumeView.as_view(),
         name="view",
     ),

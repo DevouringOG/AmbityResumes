@@ -1,0 +1,41 @@
+<div class="pagination justify-content-center mt-4">
+  <ul class="pagination">
+      {% if page_obj.has_previous %}
+          <li class="page-item">
+              <a class="page-link text-danger" href="?page=1">&laquo; первая</a>
+          </li>
+          <li class="page-item">
+              <a class="page-link text-danger" href="?page={{ page_obj.previous_page_number }}">предыдущая</a>
+          </li>
+      {% else %}
+          <li class="page-item disabled">
+              <span class="page-link text-muted">&laquo; первая</span>
+          </li>
+          <li class="page-item disabled">
+              <span class="page-link text-muted">предыдущая</span>
+          </li>
+      {% endif %}
+
+      <li class="page-item disabled">
+          <span class="page-link text-danger">
+              Страница {{ page_obj.number }} из {{ paginator.num_pages }}.
+          </span>
+      </li>
+
+      {% if page_obj.has_next %}
+          <li class="page-item">
+              <a class="page-link text-danger" href="?page={{ page_obj.next_page_number }}">следующая</a>
+          </li>
+          <li class="page-item">
+              <a class="page-link text-danger" href="?page={{ paginator.num_pages }}">последняя &raquo;</a>
+          </li>
+      {% else %}
+          <li class="page-item disabled">
+              <span class="page-link text-muted">следующая</span>
+          </li>
+          <li class="page-item disabled">
+              <span class="page-link text-muted">последняя &raquo;</span>
+          </li>
+      {% endif %}
+  </ul>
+</div>

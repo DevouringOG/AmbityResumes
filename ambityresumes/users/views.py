@@ -26,6 +26,8 @@ class AuthView(View):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
+                    for folder_name in ["Приглашённые", "Удалённые", "Избранные"]:
+                        Folder.objects.create(name=folder_name, user=user)
                     return redirect(reverse_lazy("resumes:search"))  # Замените на имя вашего представления после входа
             else:
                 login_form = AuthenticationForm(data=request.POST)
@@ -44,6 +46,8 @@ class AuthView(View):
                 user = authenticate(username=username, password=password)
                 if user is not None:
                     login(request, user)
+                    for folder_name in ["Приглашённые", "Удалённые", "Избранные"]:
+                        Folder.objects.create(name=folder_name, user=user)
                     return redirect(reverse_lazy("resumes:search"))  # Замените на имя вашего представления после регистрации
             else:
                 login_form = AuthenticationForm()

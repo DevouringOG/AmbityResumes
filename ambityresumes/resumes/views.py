@@ -1,7 +1,7 @@
 from typing import Any
 from django.db.models.query import QuerySet
 from django.views import View
-from django.views.generic import TemplateView, ListView, CreateView, DetailView
+from django.views.generic import TemplateView, ListView, CreateView, DetailView, RedirectView
 from django.http import HttpResponseRedirect
 from resumes.models import Resume, Applicant, Area, Education, EducationLevel, ExperienceIndustry, Currency, ExperiencePosition, Experience, Folder
 import requests
@@ -11,7 +11,8 @@ import re
 from transliterate import translit
 from django.utils import timezone
 from datetime import datetime
-
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 
 
 class UpdateDataView(View):
@@ -235,13 +236,13 @@ class FolderView(ListView):
     paginate_by = 50
 
     def get_queryset(self):
-        folder = Folder.objects.get(pk=self.kwargs['pk'])  # Получаем папку по переданному pk из URL
+        folder = Folder.objects.get(pk=self.kwargs['folder_pk'])  # Получаем папку по переданному pk из URL
         return folder.resumes.all()
     
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        folder = Folder.objects.get(pk=self.kwargs['pk'])
-        context["folder_name"] = folder.name
+        folder = Folder.objects.get(pk=self.kwargs['folder_pk'])
+        context["folder"] = folder
         return context
 
 
@@ -249,3 +250,45 @@ class ResumeView(DetailView):
     model = Resume
     template_name = "resumes/view.html"
     context_object_name = "resume"
+    pk_url_kwarg = 'resume_pk'
+
+    def post(self, request, *args, **kwargs):
+        print("invite" in request.POST, "delete" in request.POST, "favorite" in request.POST)
+        resume = Resume.objects.get(pk=self.kwargs["resume_pk"])
+
+        if "invite" in request.POST:
+            status = resume.invite
+            resume.invite = not status
+            resume.save()
+
+            invite_folder = Folder.objects.get(name="Приглашённые", user=request.user)
+            if status:
+                invite_folder.resumes.remove(resume)
+            else:
+                invite_folder.resumes.add(resume)
+        
+        if "delete" in request.POST:
+            status = resume.delete
+            resume.delete = not status
+            resume.save()
+
+            delete_folder = Folder.objects.get(name="Удалённые", user=request.user)
+            main_folder = Folder.objects.get(pk=self.kwargs["folder_pk"])
+            main_folder.resumes.remove(resume)
+            if status:
+                delete_folder.resumes.remove(resume)
+            else:
+                delete_folder.resumes.add(resume)
+        
+        if "favorite" in request.POST:
+            status = resume.favorite
+            resume.favorite = not status
+            resume.save()
+
+            favorite_folder = Folder.objects.get(name="Избранные", user=request.user)
+            if status:
+                favorite_folder.resumes.remove(resume)
+            else:
+                favorite_folder.resumes.add(resume)
+
+        return redirect(reverse_lazy("resumes:folder", kwargs={"folder_pk": self.kwargs["folder_pk"]}))

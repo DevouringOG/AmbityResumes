@@ -18,6 +18,28 @@
                     <p><strong>Возраст:</strong> {{ resume.applicant.age }}</p>
                     <p><strong>Пол:</strong> {{ resume.applicant.gender }}</p>
                 </div>
+                <div class="card-footer">
+                  <form method="POST">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-invite" name="invite" type="submit">
+                      {% if resume.invite %}
+                      Убрать из приглашённых
+                      {% else %}
+                      Пригласить
+                      {% endif %}
+                    </button>
+                    <button class="btn btn-danger btn-delete" name="delete" type="submit">
+                      Удалить
+                    </button>
+                  <button class="btn btn-warning btn-favorite" name="favorite" type="submit">
+                    {% if resume.favorite %}
+                    Убрать из избранных
+                    {% else %}
+                    В избранные
+                    {% endif %}
+                  </button>
+                  </form>
+                </div>
             </div>
 
         </div>

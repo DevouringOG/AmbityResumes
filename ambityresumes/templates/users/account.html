@@ -14,7 +14,10 @@
                 <h2 class="text-white mb-0 md-4">{{ request.user.username }}</h2>
             </div>
         </div>
-        <a href="#" class="btn btn-light fw-bold">Выйти</a>
+        <form method="post" action="{% url 'users:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-light fw-bold">Выйти</button>
+        </form>
     </div>
 
     <!-- Основная часть с папками резюме пользователя -->
@@ -41,6 +44,8 @@
         </div>
 
     </div>
+    {% include "includes/pagination.html" %}
+
 
 </div>
 

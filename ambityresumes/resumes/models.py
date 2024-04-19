@@ -79,6 +79,9 @@ class Resume(models.Model):
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
     description = models.CharField(max_length=2048, null=True)
+    invite = models.BooleanField(default=False)
+    delete = models.BooleanField(default=False)
+    favorite = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.applicant.last_name} {self.applicant.first_name} - {self.title}"

@@ -1,3 +1,5 @@
+{% load humanize %}
+
 <div class="container mt-5">
   <div class="col mt-3">
       <div class="overflow-auto">
@@ -21,7 +23,7 @@
                       <td>{{ resume.applicant.age }}</td>
                       <td>{{ resume.applicant.area }}</td>
                       <td>{{ resume.applicant.gender }}</td>
-                      <td>{{ resume.salary_amount }} {{ resume.salary_currency.name }}</td>
+                      <td>{{ resume.salary_amount|intcomma }} {{ resume.salary_currency.name }}</td>
                       <td>{{ resume.applicant.total_experience }}</td>
                   </tr>
                   {% endfor %}
