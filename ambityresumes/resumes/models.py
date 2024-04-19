@@ -4,24 +4,24 @@ from django.db import models
 # Соискатель
 class Applicant(models.Model):
     GENDER_CHOICES = [
-        ("Мужской", "Мужской"),
-        ("Женский", "Женский"),
+        ("Мужчина", "Мужчина"),
+        ("Женщина", "Женщина"),
         ("Не указан", "Не указан"),
     ]
 
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, null=True)
+    last_name = models.CharField(max_length=255, null=True)
     middle_name = models.CharField(max_length=255, blank=True, null=True)
-    age = models.PositiveIntegerField()
+    age = models.PositiveIntegerField(null=True)
     gender = models.CharField(
         max_length=15,
         choices=GENDER_CHOICES,
-        default="Мужской",
+        default="Мужчина",
     )
     phone = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField()
-    total_experience = models.PositiveIntegerField()
-    area = models.CharField(max_length=255)
+    email = models.EmailField(null=True)
+    total_experience = models.PositiveIntegerField(null=True)
+    area = models.CharField(max_length=255, null=True)
 
     def __str__(self):
         return f"{self.last_name} {self.first_name} {self.middle_name or ''}"
@@ -50,9 +50,9 @@ class Experience(models.Model):
         Applicant, related_name="experiences", on_delete=models.CASCADE
     )
     area = models.ForeignKey("Area", on_delete=models.SET_NULL, null=True)
-    company = models.CharField(max_length=255)
-    start = models.DateField()
-    end = models.DateField()
+    company = models.CharField(max_length=255, null=True)
+    start = models.DateField(null=True)
+    end = models.DateField(null=True)
     industry = models.ForeignKey(
         "ExperienceIndustry", on_delete=models.SET_NULL, null=True
     )
@@ -69,7 +69,7 @@ class Resume(models.Model):
     api_id = models.IntegerField(unique=True)
     applicant = models.OneToOneField(Applicant, on_delete=models.CASCADE)
     certificate = models.URLField(blank=True, null=True)
-    salary_amount = models.PositiveIntegerField()
+    salary_amount = models.PositiveIntegerField(null=True)
     salary_currency = models.ForeignKey(
         "Currency", on_delete=models.SET_NULL, null=True
     )

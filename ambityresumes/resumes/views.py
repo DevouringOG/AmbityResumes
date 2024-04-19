@@ -30,7 +30,6 @@ class UpdateDataView(View):
             if item_name:
                 if bool(re.search('[a-zA-Z]', item_name)):
                     item_name = translit(item_name, "ru")
-                    print(item_name)
                 Area.objects.get_or_create(name=item_name)
 
         for i, j in self.MODELS_AND_URLS.items():
@@ -86,15 +85,12 @@ class SearchResumesView(ListView):
         for key, value in self.request.GET.items():
             if value and key not in ["total_experience", "position", "date_from", "date_to"]:
                 params[key] = value
-                print(params[key])
             # if key in ["date_from", "date_to"]:
             #     params[key] = datetime.strptime(value, '%Y-%m-%d').isoformat()
-            #     print(params[key])
 
         response = requests.get(api_url, headers=headers, params=params)
 
         if response.status_code == 200:
-            print(200)
             api_resumes = response.json()
             # Создаем резюме в БД на основе ответа API
             for api_resume in api_resumes:
@@ -104,15 +100,15 @@ class SearchResumesView(ListView):
                 
                 # Проверяем, существует ли такой соискатель в БД
                 applicant, created = Applicant.objects.get_or_create(
-                    first_name=api_resume["first_name"],
-                    last_name=api_resume["last_name"],
-                    middle_name=api_resume["middle_name"],
-                    age=api_resume["age"],
+                    first_name=api_resume["first_name"] if api_resume["first_name"] else None,
+                    last_name=api_resume["last_name"] if api_resume["last_name"] else None,
+                    middle_name=api_resume["middle_name"] if api_resume["middle_name"].isdigit() else None,
+                    age=api_resume["age"] if api_resume["age"] else None,
                     gender=api_resume["gender"] if api_resume["gender"] else "Не указан",
-                    phone=api_resume["phone"],
-                    email=api_resume["email"],
-                    total_experience=api_resume["total_experience"],
-                    area=translit(api_resume["area"], "ru"),
+                    phone=api_resume["phone"] if api_resume["phone"] else None,
+                    email=api_resume["email"] if api_resume["email"] else None,
+                    total_experience=api_resume["total_experience"] if api_resume["total_experience"] else None,
+                    area=translit(api_resume["area"], "ru") if api_resume["area"] else None,
                 )
                 
                 # Создаем или обновляем образование соискателя
@@ -137,11 +133,10 @@ class SearchResumesView(ListView):
                 end_date_formatted = end_date.strftime('%Y-%m-%d')
 
                 area_inst = Area.objects.get_or_create(name=translit(experience_data["area"], "ru")),
-                print(experience_data['industry'])
                 Experience.objects.update_or_create(
                     applicant=applicant,
                     area=area_inst[0][0],
-                    company=experience_data['company'],
+                    company=experience_data['company'] if experience_data['company'] else None,
                     start=start_date_formatted,
                     end=end_date_formatted,
                     industry=ExperienceIndustry.objects.get(name=experience_data['industry']) if experience_data['industry'] else None,
@@ -153,10 +148,10 @@ class SearchResumesView(ListView):
                     api_id=api_resume['id'],
                     defaults={
                         'applicant': applicant,
-                        'certificate': api_resume['certificate'],
-                        'salary_amount': salary['amount'],
+                        'certificate': api_resume['certificate'] if api_resume['certificate'] else None,
+                        'salary_amount': salary['amount'] if salary['amount'] else None,
                         'salary_currency': Currency.objects.get(name=salary['currency']),
-                        'title': api_resume['title'],
+                        'title': api_resume['title'] if api_resume['title'] else None,
                         'description': api_resume['resume'] if api_resume['resume'] else None,
                         "created_at": api_resume['created_at'],
                         "updated_at": api_resume['updated_at'],
@@ -168,36 +163,37 @@ class SearchResumesView(ListView):
             queryset = Resume.objects.all()
 
             # Проверка и фильтрация по возрасту
-            if age_from is not None:
+            if age_from:
                 queryset = queryset.filter(applicant__age__gte=age_from)
 
-            if age_to is not None:
+            if age_to:
                 queryset = queryset.filter(applicant__age__lte=age_to)
 
             # Проверка и фильтрация по району
-            if area is not None:
-                queryset = queryset.filter(applicant__area__name=area)
+            if area:
+                queryset = queryset.filter(applicant__area=area)
 
             # Проверка и фильтрация по дате создания
-            if date_from is not None:
+            if date_from:
                 queryset = queryset.filter(created_at__gte=date_from)
 
-            if date_to is not None:
+            if date_to:
                 queryset = queryset.filter(created_at__lte=date_to)
 
             # Проверка и фильтрация по общему опыту
-            if total_experience is not None:
+            if total_experience:
                 queryset = queryset.filter(applicant__total_experience__gte=total_experience)
 
             # Проверка и фильтрация по полу
-            if gender is not None:
+            print(gender)
+            if gender:
                 queryset = queryset.filter(applicant__gender=gender)
 
             # Проверка и фильтрация по зарплате
-            if salary_from is not None:
+            if salary_from:
                 queryset = queryset.filter(salary_amount__gte=salary_from)
 
-            if salary_to is not None:
+            if salary_to:
                 queryset = queryset.filter(salary_amount__lte=salary_to)
             
             if education_level:
