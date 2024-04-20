@@ -1,13 +1,18 @@
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import TemplateView, ListView
+from django.views.generic import ListView
 from resumes.models import Folder
+from django.http import HttpResponseRedirect
 
 
 class AuthView(View):
+    """
+    Представление для аутентификации пользователей.
+    """
+
     def get(self, request):
         login_form = AuthenticationForm()
         register_form = UserCreationForm()
@@ -18,48 +23,84 @@ class AuthView(View):
         )
 
     def post(self, request):
+        """
+        Обрабатывает данные форм входа и регистрации.
+        """
         if "login_submit" in request.POST:
             form = AuthenticationForm(request=request, data=request.POST)
             if form.is_valid():
-                username = form.cleaned_data["username"]
-                password = form.cleaned_data["password"]
-                user = authenticate(username=username, password=password)
-                if user is not None:
-                    login(request, user)
-                    for folder_name in ["Приглашённые", "Удалённые", "Избранные"]:
-                        Folder.objects.create(name=folder_name, user=user)
-                    return redirect(reverse_lazy("resumes:search"))  # Замените на имя вашего представления после входа
+                user = self.authenticate_and_login(request, form.cleaned_data)
+                if user:
+                    self.create_default_folders(user)
+                    return redirect(
+                        reverse_lazy("resumes:search")
+                    )  # Замените на имя вашего представления после входа
             else:
-                login_form = AuthenticationForm(data=request.POST)
-                register_form = UserCreationForm()
-                return render(
+                return self.render_forms(
                     request,
-                    "users/auth.html",
-                    {"login_form": login_form, "register_form": register_form},
+                    AuthenticationForm(data=request.POST),
+                    UserCreationForm(),
                 )
+
         elif "register_submit" in request.POST:
             form = UserCreationForm(data=request.POST)
             if form.is_valid():
                 form.save()
-                username = form.cleaned_data["username"]
-                password = form.cleaned_data["password1"]
-                user = authenticate(username=username, password=password)
-                if user is not None:
-                    login(request, user)
-                    for folder_name in ["Приглашённые", "Удалённые", "Избранные"]:
-                        Folder.objects.create(name=folder_name, user=user)
-                    return redirect(reverse_lazy("resumes:search"))  # Замените на имя вашего представления после регистрации
-            else:
-                login_form = AuthenticationForm()
-                register_form = UserCreationForm(data=request.POST)
-                return render(
-                    request,
-                    "users/auth.html",
-                    {"login_form": login_form, "register_form": register_form},
+                user = self.authenticate_and_login(
+                    request, form.cleaned_data, reg=True
                 )
+                if user:
+                    self.create_default_folders(user)
+                    return redirect(
+                        reverse_lazy("resumes:search")
+                    )  # Замените на имя вашего представления после регистрации
+            else:
+                return self.render_forms(
+                    request,
+                    AuthenticationForm(),
+                    UserCreationForm(data=request.POST),
+                )
+
+        # Добавим возврат HttpResponseRedirect в случае, если запрос не содержит нужные данные
+        return HttpResponseRedirect(
+            reverse_lazy("users:auth")
+        )  # Замените на правильный URL для вашего представления
+
+    def authenticate_and_login(self, request, cleaned_data, reg=False):
+        """
+        Аутентификация пользователя и вход в систему.
+        """
+        username = cleaned_data["username"]
+        password = cleaned_data["password" if not reg else "password1"]
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return user
+        return None
+
+    def create_default_folders(self, user):
+        """
+        Создает стандартные папки для нового пользователя.
+        """
+        for folder_name in ["Приглашённые", "Удалённые", "Избранные"]:
+            Folder.objects.create(name=folder_name, user=user)
+
+    def render_forms(self, request, login_form, register_form):
+        """
+        Отображает формы входа и регистрации с переданными данными.
+        """
+        return render(
+            request,
+            "users/auth.html",
+            {"login_form": login_form, "register_form": register_form},
+        )
 
 
 class AccountView(ListView):
+    """
+    Представление для отображения папок пользователя.
+    """
+
     template_name = "users/account.html"
     context_object_name = "folders"
     model = Folder

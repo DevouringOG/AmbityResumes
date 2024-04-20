@@ -1,19 +1,19 @@
 from django.urls import path
 from django.contrib.auth.views import LogoutView
 
-import users.views
+from users.views import AuthView, AccountView
 
 app_name = "users"
 
 urlpatterns = [
     path(
         "auth/",
-        users.views.AuthView.as_view(),
+        AuthView.as_view(),
         name="auth",
     ),
     path(
         "account/",
-        users.views.AccountView.as_view(),
+        AccountView.as_view(),
         name="account",
     ),
     path(
