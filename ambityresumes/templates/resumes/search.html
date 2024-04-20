@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %}
+    Авторизация
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <form method="GET">
+        <!-- Фильтры по возрасту, области и полу -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <input type="number" class="form-control" name="age_from" placeholder="Возраст от" value="{{ request.GET.age_from }}">
+            </div>
+            <div class="col-md-3">
+                <input type="number" class="form-control" name="age_to" placeholder="Возраст до" value="{{ request.GET.age_to }}">
+            </div>
+            <div class="col-md-3">
+                <select class="form-control" name="area">
+                    <option disabled selected>Область</option>
+                    {% for area in areas %}
+                        <option value="{{ area }}">{{ area }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-control" name="gender">
+                    <option disabled selected>Пол</option>
+                    <option value="Мужчина">Мужчина</option>
+                    <option value="Женщина">Женщина</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Фильтры по типу работы, должности, опыту и уровню образования -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <select class="form-control" name="experience">
+                    <option disabled selected>Тип работы</option>
+                    {% for industry in industrys %}
+                        <option value="{{ industry }}">{{ industry }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-control" name="position">
+                    <option disabled selected>Должность</option>
+                    {% for position in positions %}
+                        <option value="{{ position }}">{{ position }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="number" class="form-control" name="total_experience" placeholder="Опыт работы (лет)" value="{{ request.GET.total_experience }}">
+            </div>
+            <div class="col-md-3">
+                <select class="form-control" name="education_level">
+                    <option disabled selected>Уровень образования</option>
+                    {% for level in education_levels %}
+                        <option value="{{ level }}">{{ level }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Фильтры по заработной плате и датам -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <select class="form-control" name="currency">
+                    <option disabled selected>Валюта</option>
+                    {% for currency in currencys %}
+                        <option value="{{ currency }}">{{ currency }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <input type="number" class="form-control" name="salary_from" placeholder="Зарплата от" value="{{ request.GET.salary_from }}">
+            </div>
+            <div class="col-md-4">
+                <input type="number" class="form-control" name="salary_to" placeholder="Зарплата до" value="{{ request.GET.salary_to }}">
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <input type="date" class="form-control" name="date_from" placeholder="Дата от" value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-4">
+                <input type="date" class="form-control" name="date_to" placeholder="Дата до" value="{{ request.GET.date_to|default:today }}">
+            </div>
+            <div class="col-md-4">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-danger w-100">Поиск</button>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'resumes:search' %}" class="btn btn-danger w-100" id="clear">Сбросить</a>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#saveFolderModal">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </form>
+</div>
+
+<link rel="stylesheet" href="{% static 'css/bootstrap.select.min.css' %}">
+
+{% include "includes/search_resumes_list.html" %}
+
+{% include "includes/pagination.html" %}
+
+<div class="modal fade" id="saveFolderModal" tabindex="-1" aria-labelledby="saveFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="saveFolderModalLabel">Введите имя папки</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="saveFolderForm" method="POST" action="{% url 'resumes:save' %}">
+            {% csrf_token %}
+            <input type="text" class="form-control" id="folderNameInput" name="name" placeholder="Имя папки">
+            
+            <!-- Скрытое поле для передачи ID отфильтрованных резюме -->
+            <input type="hidden" id="resumeIds" name="resumes" value="{% for resume in resumes %}{{ resume.id }},{% endfor %}">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+          <button type="submit" form="saveFolderForm" class="btn btn-primary">Сохранить</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectFilters = document.querySelectorAll('select');
+        selectFilters.forEach(function(selectFilter) {
+            const key = 'selected_' + selectFilter.name;
+            const savedValue = localStorage.getItem(key);
+            if (savedValue) {
+                selectFilter.value = savedValue;
+            }
+            selectFilter.addEventListener('change', function() {
+                localStorage.setItem(key, selectFilter.value);
+            });
+        });
+
+        // Обработчик события для кнопки "Сбросить"
+        const resetButton = document.getElementById('clear');
+        resetButton.addEventListener('click', function() {
+            localStorage.clear();  // Очистка localStorage
+        });
+
+        // Обработчик события для кнопки "Сохранить"
+        const saveButton = document.getElementById('saveFolderBtn');
+        saveButton.addEventListener('click', function() {
+            const folderName = document.getElementById('folderNameInput').value;
+            if (folderName.trim() !== '') {
+                // Здесь можно добавить код для сохранения папки
+                alert('Папка сохранена: ' + folderName);
+                $('#saveFolderModal').modal('hide'); // Закрыть модальное окно
+            } else {
+                alert('Введите имя папки');
+            }
+        });
+    });
+</script>
+
+
+
+<script src="{% static 'js/jQuery3-6-0.js' %}"></script>
+<script src="{% static 'js/bootstrap5-2-1.js' %}"></script>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+{% endblock %}

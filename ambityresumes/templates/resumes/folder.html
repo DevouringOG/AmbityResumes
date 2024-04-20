@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}{{ folder.name }}{% endblock %}
+
+{% block content %}
+
+<div class="p-3">
+  <h2 class="mb-4 text-dark">{{ folder.name }}</h2>
+<table id="resume-table" class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th style="cursor: pointer;" onclick="sortTable(0)">Номер</th>
+            <th style="cursor: pointer;" onclick="sortTable(1)">ФИО</th>
+            <th style="cursor: pointer;" onclick="sortTable(2)">Должность</th>
+            <th style="cursor: pointer;" onclick="sortTable(3)">ЗП</th>
+            <th style="cursor: pointer;" onclick="sortTable(4)">Возраст</th>
+            <th style="cursor: pointer;" onclick="sortTable(5)">Общий опыт</th>
+            <th style="cursor: pointer;" onclick="sortTable(6)">Город проживания</th>
+            <th style="cursor: pointer;" onclick="sortTable(7)">Уровень образования</th>
+            <th style="cursor: pointer;" onclick="sortTable(8)">Отрасль компании</th>
+            <th style="cursor: pointer;" onclick="sortTable(9)">Должность в компании</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for resume in resumes %}
+          <tr class="{% if resume.delete %}table-danger{% elif resume.invite %}table-success{% elif resume.favorite %}table-warning{% endif %}" onclick="window.location.href='{% url 'resumes:view' folder_pk=folder.id resume_pk=resume.id %}'" style="cursor: pointer;">
+            <td>{{ resume.api_id }}</td>
+            <td>{{ resume.applicant.first_name }} {{ resume.applicant.middle_name|slice:":1" }}</td>
+            <td>{{ resume.title }}</td>
+            <td style="font-weight: 500">{{ resume.salary_amount|intcomma }} {{ resume.salary_currency.name }}</td>
+            <td>{{ resume.applicant.age }}</td>
+            <td>{{ resume.applicant.total_experience }}</td>
+            <td>{{ resume.applicant.area }}</td>
+            <td>{{ resume.applicant.educations.first.level.name }}</td>
+            <td>{{ resume.applicant.experiences.first.industry.name }}</td>
+            <td>{{ resume.applicant.experiences.first.position.name }}</td>
+          </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+
+<script>
+  function sortTable(n) {
+    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    table = document.getElementById("resume-table");
+    switching = true;
+    dir = "asc";
+  
+    while (switching) {
+      switching = false;
+      rows = table.rows;
+  
+      for (i = 1; i < rows.length - 1; i++) {
+        shouldSwitch = false;
+  
+        x = rows[i].getElementsByTagName("TD")[n];
+        y = rows[i + 1].getElementsByTagName("TD")[n];
+  
+        if (n === 3) { // Если столбец ЗП
+          var xValue = parseFloat(x.innerHTML.split(' ')[0]);
+          var yValue = parseFloat(y.innerHTML.split(' ')[0]);
+        } else if (n === 0) { // Если столбец Номер
+          var xValue = parseInt(x.innerHTML);
+          var yValue = parseInt(y.innerHTML);
+        } else {
+          var xValue = x.innerHTML;
+          var yValue = y.innerHTML;
+        }
+  
+        if (dir == "asc") {
+          if (xValue > yValue) {
+            shouldSwitch = true;
+            break;
+          }
+        } else if (dir == "desc") {
+          if (xValue < yValue) {
+            shouldSwitch = true;
+            break;
+          }
+        }
+      }
+  
+      if (shouldSwitch) {
+        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+        switching = true;
+        switchcount++;
+      } else {
+        if (switchcount == 0 && dir == "asc") {
+          dir = "desc";
+          switching = true;
+        }
+      }
+    }
+  }
+</script>
+
+{% endblock %}

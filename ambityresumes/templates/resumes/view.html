@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Левая колонка для заголовка резюме -->
+        <div class="col-md-4">
+
+            <!-- Заголовок резюме -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h3>{{ resume.applicant.last_name }} {{ resume.applicant.first_name }} {{ resume.applicant.middle_name }}</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Желаемая должность:</strong> {{ resume.title }}</p>
+                    <p><strong>Email:</strong> {{ resume.applicant.email }}</p>
+                    <p><strong>Телефон:</strong> {{ resume.applicant.phone }}</p>
+                    <p><strong>Возраст:</strong> {{ resume.applicant.age }}</p>
+                    <p><strong>Пол:</strong> {{ resume.applicant.gender }}</p>
+                </div>
+                <div class="card-footer">
+                  <form method="POST">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-invite" name="invite" type="submit">
+                      {% if resume.invite %}
+                      Убрать из приглашённых
+                      {% else %}
+                      Пригласить
+                      {% endif %}
+                    </button>
+                    <button class="btn btn-danger btn-delete" name="delete" type="submit">
+                      Удалить
+                    </button>
+                  <button class="btn btn-warning btn-favorite" name="favorite" type="submit">
+                    {% if resume.favorite %}
+                    Убрать из избранных
+                    {% else %}
+                    В избранные
+                    {% endif %}
+                  </button>
+                  </form>
+                </div>
+            </div>
+
+        </div>
+        <!-- Правая колонка для остальных блоков -->
+        <div class="col-md-8">
+
+            <!-- Блок Образование -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="text-start">Образование</h4>
+                    <hr class="hr" />
+                    {% for education in resume.applicant.educations.all %}
+                        <p><strong>Уровень образования:</strong> {{ education.level.name }}</p>
+                        <p><strong>Название учебного заведения:</strong> {{ education.primary_name }}</p>
+                        <p><strong>Организация:</strong> {{ education.primary_organization }}</p>
+                        <p><strong>Результат:</strong> {{ education.primary_result }}</p>
+                        <p><strong>Год окончания:</strong> {{ education.primary_year }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Блок Опыт работы -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Опыт работы</h4>
+                    <hr class="hr" />
+                    {% for experience in resume.applicant.experiences.all %}
+                        <p><strong>Компания:</strong> {{ experience.company }}</p>
+                        <p><strong>Должность:</strong> {{ experience.position.name }}</p>
+                        <p><strong>Отрасль:</strong> {{ experience.industry.name }}</p>
+                        <p><strong>Начало работы:</strong> {{ experience.start }}</p>
+                        <p><strong>Окончание работы:</strong> {{ experience.end }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Блок Дополнительная информация -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>Дополнительная информация</h4>
+                    <hr class="hr" />
+                    <p><strong>Ссылка на сертификат:</strong> <a href="{{ resume.certificate }}">{{ resume.certificate }}</a></p>
+                    <p><strong>Зарплата:</strong> {{ resume.salary_amount|intcomma }} {{ resume.salary_currency.name }}</p>
+                    <p><strong>Дата создания резюме:</strong> {{ resume.created_at }}</p>
+                    <p><strong>Дата обновления резюме:</strong> {{ resume.updated_at }}</p>
+                    <p><strong>Описание:</strong> {{ resume.description }}</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
