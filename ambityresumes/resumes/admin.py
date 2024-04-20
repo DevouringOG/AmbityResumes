@@ -1,15 +1,16 @@
 from django.contrib import admin
+
 from resumes.models import (
     Applicant,
-    Education,
-    Experience,
-    Resume,
     Area,
+    Currency,
+    Education,
     EducationLevel,
+    Experience,
     ExperienceIndustry,
     ExperiencePosition,
-    Currency,
     Folder,
+    Resume,
 )
 
 admin.site.register(
@@ -24,5 +25,5 @@ admin.site.register(
         ExperiencePosition,
         Currency,
         Folder,
-    ]
+    ],
 )

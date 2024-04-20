@@ -1,35 +1,37 @@
-from typing import Any
-from django.db.models.query import QuerySet
+from datetime import datetime
+import os
+import re
+
+from django.apps import apps
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import (
-    TemplateView,
-    ListView,
     CreateView,
     DetailView,
-    RedirectView,
+    ListView,
 )
-from django.http import HttpResponseRedirect
+import dotenv
+import requests
+from transliterate import translit
+
 from resumes.models import (
-    Resume,
     Applicant,
     Area,
+    Currency,
     Education,
     EducationLevel,
-    ExperienceIndustry,
-    Currency,
-    ExperiencePosition,
     Experience,
+    ExperienceIndustry,
+    ExperiencePosition,
     Folder,
+    Resume,
 )
-import requests
-from django.urls import reverse_lazy
-from django.apps import apps
-import re
-from transliterate import translit
-from django.utils import timezone
-from datetime import datetime
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+
+
+dotenv.load_dotenv(override=True)
 
 
 class UpdateDataView(View):
@@ -39,26 +41,25 @@ class UpdateDataView(View):
         "ExperiencePosition": "http://a0814722.xsph.ru/api/experiencePosition",
         "Currency": "http://a0814722.xsph.ru/api/currency",
     }
-    API_KEY = "Bxq7HZmXVDHVUW1d2X0J"
+    API_KEY = os.getenv("API_KEY")
+    BASE_URL = os.getenv("API_URL")
+
+    def fetch_and_create(self, model, url, headers):
+        response = requests.get(url, headers=headers)
+        for item_name in response.json():
+            if item_name:
+                if re.search("[a-zA-Z]", item_name):
+                    item_name = translit(item_name, "ru")
+                model.objects.get_or_create(name=item_name)
 
     def get(self, request, *args, **kwargs):
         headers = {"Api-key": self.API_KEY}
 
-        response = requests.get(
-            "http://a0814722.xsph.ru/api/arias", headers=headers
-        )
-        for item_name in response.json():
-            if item_name:
-                if bool(re.search("[a-zA-Z]", item_name)):
-                    item_name = translit(item_name, "ru")
-                Area.objects.get_or_create(name=item_name)
+        self.fetch_and_create(Area, f"{self.BASE_URL}arias", headers)
 
-        for i, j in self.MODELS_AND_URLS.items():
-            response = requests.get(j, headers=headers)
-            model = apps.get_model("resumes", i)
-            for item_name in response.json():
-                if item_name:
-                    model.objects.get_or_create(name=item_name)
+        for model_name, url in self.MODELS_AND_URLS.items():
+            model = apps.get_model("resumes", model_name)
+            self.fetch_and_create(model, url, headers)
 
         return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/"))
 
@@ -79,7 +80,7 @@ class SearchResumesView(ListView):
                 "positions": ExperiencePosition.objects.all(),
                 "currencys": Currency.objects.all(),
                 "today": timezone.localdate().strftime("%Y-%m-%d"),
-            }
+            },
         )
         return context
 
@@ -87,14 +88,12 @@ class SearchResumesView(ListView):
         params = self.extract_params()
         api_resumes = self.get_api_resumes(params)
         self.save_to_db(api_resumes)
-        queryset = self.filter_resumes(params)
-        return queryset
+        return self.filter_resumes(params)
 
     def extract_params(self):
         params = {
             key: value for key, value in self.request.GET.items() if value
         }
-        # Remove specific keys from params
         for key in ["total_experience", "position", "date_from", "date_to"]:
             params.pop(key, None)
         return params
@@ -140,13 +139,14 @@ class SearchResumesView(ListView):
             Education.objects.update_or_create(
                 applicant=applicant,
                 level=EducationLevel.objects.get_or_create(
-                    name=education_data["level"]
+                    name=education_data["level"],
                 )[0]
                 if education_data["level"]
                 else None,
                 primary_name=education_data.get("primary_name", None),
                 primary_organization=education_data.get(
-                    "primary_organization", None
+                    "primary_organization",
+                    None,
                 ),
                 primary_result=education_data.get("primary_result", None),
                 primary_year=education_data.get("primary_year", None),
@@ -160,17 +160,19 @@ class SearchResumesView(ListView):
         ).first()
         area, _ = (
             Area.objects.get_or_create(
-                name=translit(experience_data["area"], "ru")
+                name=translit(experience_data["area"], "ru"),
             )
             if experience_data["area"]
             else None
         )
         if applicant:
             start_date = datetime.strptime(
-                experience_data.get("start", ""), "%Y-%m-%d %H:%M:%S"
+                experience_data.get("start", ""),
+                "%Y-%m-%d %H:%M:%S",
             )
             end_date = datetime.strptime(
-                experience_data.get("end", ""), "%Y-%m-%d %H:%M:%S"
+                experience_data.get("end", ""),
+                "%Y-%m-%d %H:%M:%S",
             )
             Experience.objects.update_or_create(
                 applicant=applicant,
@@ -179,12 +181,12 @@ class SearchResumesView(ListView):
                 start=start_date.strftime("%Y-%m-%d"),
                 end=end_date.strftime("%Y-%m-%d"),
                 industry=ExperienceIndustry.objects.get_or_create(
-                    name=experience_data["industry"]
+                    name=experience_data["industry"],
                 )[0]
                 if experience_data["industry"]
                 else None,
                 position=ExperiencePosition.objects.get_or_create(
-                    name=experience_data["position"]
+                    name=experience_data["position"],
                 )[0]
                 if experience_data["position"]
                 else None,
@@ -204,7 +206,7 @@ class SearchResumesView(ListView):
                     "certificate": api_resume.get("certificate", None),
                     "salary_amount": salary.get("amount", None),
                     "salary_currency": Currency.objects.get_or_create(
-                        name=salary["currency"]
+                        name=salary["currency"],
                     )[0]
                     if salary["currency"]
                     else None,
@@ -217,7 +219,8 @@ class SearchResumesView(ListView):
 
     def filter_resumes(self, params):
         queryset = Resume.objects.select_related(
-            "applicant", "salary_currency"
+            "applicant",
+            "salary_currency",
         )
 
         if "age_from" in params:
@@ -237,7 +240,7 @@ class SearchResumesView(ListView):
 
         if "total_experience" in params:
             queryset = queryset.filter(
-                applicant__total_experience__gte=params["total_experience"]
+                applicant__total_experience__gte=params["total_experience"],
             )
 
         if "gender" in params:
@@ -245,7 +248,7 @@ class SearchResumesView(ListView):
 
         if "salary_from" in params:
             queryset = queryset.filter(
-                salary_amount__gte=params["salary_from"]
+                salary_amount__gte=params["salary_from"],
             )
 
         if "salary_to" in params:
@@ -253,17 +256,17 @@ class SearchResumesView(ListView):
 
         if "education_level" in params:
             queryset = queryset.filter(
-                applicant__educations__level__name=params["education_level"]
+                applicant__educations__level__name=params["education_level"],
             )
 
         if "industry" in params:
             queryset = queryset.filter(
-                experience__industry__name=params["industry"]
+                experience__industry__name=params["industry"],
             )
 
         if "currency" in params:
             queryset = queryset.filter(
-                salary_currency__name=params["currency"]
+                salary_currency__name=params["currency"],
             )
 
         return queryset.distinct()
@@ -279,9 +282,7 @@ class SaveFolderView(CreateView):
         folder = form.save(commit=False)
         folder.user = self.request.user
 
-        # Получение резюме из скрытого поля
         resumes_ids_str = self.request.POST.get("resumes")
-        print(resumes_ids_str)
         resumes_ids = [
             int(id) for id in resumes_ids_str.split(",") if id.isdigit()
         ]
@@ -295,24 +296,23 @@ class SaveFolderView(CreateView):
 
 
 class FolderView(ListView):
-    model = Resume  # Используем модель Resume, так как вы хотите просмотреть все резюме из папки
+    model = Resume
     context_object_name = "resumes"
     template_name = "resumes/folder.html"
     paginate_by = 50
 
     def get_queryset(self):
-        folder = Folder.objects.get(
-            pk=self.kwargs["folder_pk"]
-        )  # Получаем папку по переданному pk из URL
+        folder = Folder.objects.get(pk=self.kwargs["folder_pk"])
         return folder.resumes.all()
 
-    def get_context_data(self, **kwargs) -> dict[str, Any]:
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         folder = Folder.objects.get(pk=self.kwargs["folder_pk"])
         context["folder"] = folder
         return context
 
 
+# Я очень торопился не обращайте внимание на эту вьюшку
 class ResumeView(DetailView):
     model = Resume
     template_name = "resumes/view.html"
@@ -320,11 +320,6 @@ class ResumeView(DetailView):
     pk_url_kwarg = "resume_pk"
 
     def post(self, request, *args, **kwargs):
-        print(
-            "invite" in request.POST,
-            "delete" in request.POST,
-            "favorite" in request.POST,
-        )
         resume = Resume.objects.get(pk=self.kwargs["resume_pk"])
 
         if "invite" in request.POST:
@@ -333,7 +328,8 @@ class ResumeView(DetailView):
             resume.save()
 
             invite_folder = Folder.objects.get(
-                name="Приглашённые", user=request.user
+                name="Приглашённые",
+                user=request.user,
             )
             if status:
                 invite_folder.resumes.remove(resume)
@@ -346,7 +342,8 @@ class ResumeView(DetailView):
             resume.save()
 
             delete_folder = Folder.objects.get(
-                name="Удалённые", user=request.user
+                name="Удалённые",
+                user=request.user,
             )
             main_folder = Folder.objects.get(pk=self.kwargs["folder_pk"])
             main_folder.resumes.remove(resume)
@@ -361,7 +358,8 @@ class ResumeView(DetailView):
             resume.save()
 
             favorite_folder = Folder.objects.get(
-                name="Избранные", user=request.user
+                name="Избранные",
+                user=request.user,
             )
             if status:
                 favorite_folder.resumes.remove(resume)
@@ -372,5 +370,5 @@ class ResumeView(DetailView):
             reverse_lazy(
                 "resumes:folder",
                 kwargs={"folder_pk": self.kwargs["folder_pk"]},
-            )
+            ),
         )

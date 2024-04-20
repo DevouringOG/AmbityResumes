@@ -1,11 +1,12 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView
+
 from resumes.models import Folder
-from django.http import HttpResponseRedirect
 
 
 class AuthView(View):
@@ -31,10 +32,7 @@ class AuthView(View):
             if form.is_valid():
                 user = self.authenticate_and_login(request, form.cleaned_data)
                 if user:
-                    self.create_default_folders(user)
-                    return redirect(
-                        reverse_lazy("resumes:search")
-                    )  # Замените на имя вашего представления после входа
+                    return redirect(reverse_lazy("resumes:search"))
             else:
                 return self.render_forms(
                     request,
@@ -47,13 +45,13 @@ class AuthView(View):
             if form.is_valid():
                 form.save()
                 user = self.authenticate_and_login(
-                    request, form.cleaned_data, reg=True
+                    request,
+                    form.cleaned_data,
+                    reg=True,
                 )
                 if user:
                     self.create_default_folders(user)
-                    return redirect(
-                        reverse_lazy("resumes:search")
-                    )  # Замените на имя вашего представления после регистрации
+                    return redirect(reverse_lazy("resumes:search"))
             else:
                 return self.render_forms(
                     request,
@@ -61,10 +59,7 @@ class AuthView(View):
                     UserCreationForm(data=request.POST),
                 )
 
-        # Добавим возврат HttpResponseRedirect в случае, если запрос не содержит нужные данные
-        return HttpResponseRedirect(
-            reverse_lazy("users:auth")
-        )  # Замените на правильный URL для вашего представления
+        return HttpResponseRedirect(reverse_lazy("users:auth"))
 
     def authenticate_and_login(self, request, cleaned_data, reg=False):
         """

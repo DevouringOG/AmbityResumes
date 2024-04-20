@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 
 # Соискатель
@@ -32,10 +32,14 @@ class Applicant(models.Model):
 # Образование соискателя
 class Education(models.Model):
     applicant = models.ForeignKey(
-        Applicant, related_name="educations", on_delete=models.CASCADE
+        Applicant,
+        related_name="educations",
+        on_delete=models.CASCADE,
     )
     level = models.ForeignKey(
-        "EducationLevel", on_delete=models.SET_NULL, null=True
+        "EducationLevel",
+        on_delete=models.SET_NULL,
+        null=True,
     )
     primary_name = models.CharField(max_length=255, null=True)
     primary_organization = models.CharField(max_length=255, null=True)
@@ -49,17 +53,23 @@ class Education(models.Model):
 # Опыт работы
 class Experience(models.Model):
     applicant = models.ForeignKey(
-        Applicant, related_name="experiences", on_delete=models.CASCADE
+        Applicant,
+        related_name="experiences",
+        on_delete=models.CASCADE,
     )
     area = models.ForeignKey("Area", on_delete=models.SET_NULL, null=True)
     company = models.CharField(max_length=255, null=True)
     start = models.DateField(null=True)
     end = models.DateField(null=True)
     industry = models.ForeignKey(
-        "ExperienceIndustry", on_delete=models.SET_NULL, null=True
+        "ExperienceIndustry",
+        on_delete=models.SET_NULL,
+        null=True,
     )
     position = models.ForeignKey(
-        "ExperiencePosition", on_delete=models.SET_NULL, null=True
+        "ExperiencePosition",
+        on_delete=models.SET_NULL,
+        null=True,
     )
 
     def __str__(self):
@@ -73,7 +83,9 @@ class Resume(models.Model):
     certificate = models.URLField(blank=True, null=True)
     salary_amount = models.PositiveIntegerField(null=True)
     salary_currency = models.ForeignKey(
-        "Currency", on_delete=models.SET_NULL, null=True
+        "Currency",
+        on_delete=models.SET_NULL,
+        null=True,
     )
     title = models.CharField(max_length=255)
     created_at = models.DateTimeField()
